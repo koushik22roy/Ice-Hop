@@ -4,25 +4,23 @@ using DG.Tweening;
 using UnityEngine.UI;
 public class Player : MonoBehaviour {
 	public GameObject Score;
-	int score;
 	public GameObject HighScore;
+	int score;
 	int highscore;
 	public bool GameOn; 
 	private SFXmanager sfx;
 	// Use this for initialization
 	void Start () {
 		//get value of highscore and show on highscore text.
-		highscore=PlayerPrefs.GetInt ("HighScore",0);
-		HighScore.GetComponent<Text>().text =highscore.ToString ();
+		//highscore=PlayerPrefs.GetInt ("HighScore",0);
+		//HighScore.GetComponent<Text>().text =highscore.ToString ();
 		//stimulate touches as mouse click.
 		Input.simulateMouseWithTouches = true;
 		sfx = FindObjectOfType<SFXmanager> ();
-		//disable controlls on starting
-		GameOn = false;
 	}
 
 	void Update () {
-		if (GameOn) {
+		if (!GameOn) {
 			//on pressing left key, jump and move to next iceberg while playing small jump audio.
 			if (Input.GetKeyDown(KeyCode.LeftArrow)) {
 				transform.DOMoveX (transform.position.x + 1.1f, 0.1f);
@@ -46,14 +44,17 @@ public class Player : MonoBehaviour {
 				transform.DOMoveY (transform.position.y + 0.2f, 0.05f);
 			sfx.JumpingBig.Play ();
 			}
-			#endif
+#endif
+
+			GameObject.FindGameObjectWithTag("MainCamera").GetComponent<Mover>().speed = 2;
+		//	GameObject.FindGameObjectWithTag("Background").GetComponent<ScrollingBackground>().speed = 2;
 		}
 		Vector2 screenPosition = Camera.main.WorldToScreenPoint(transform.position);
 		//If the player gets out of the gameplay area, end the game.
 		if (screenPosition.x > Screen.width || screenPosition.x < 0)
 		{
-			GameOn = false;
-			GameObject.FindGameObjectWithTag("GameController").GetComponent<GameController> ().SendMessage ("GameOver");
+			//GameOn = false;
+			GameObject.FindGameObjectWithTag("GameController").GetComponent<GameController> ().GameOver();
 			sfx.GameOver.Play ();
 			Destroy(this.gameObject);
 		}
@@ -62,20 +63,13 @@ public class Player : MonoBehaviour {
 		//On steping on next iceberg add score and increase time scale by 0.02.
 		if(coll.gameObject.tag=="Iceberg")
 		{
-			score += 1;
-			Score.GetComponent<Text>().text =score.ToString ();
-			Time.timeScale += 0.02f;
-			//if score are greater than highscore, save that score into playeprefs and show new highscore.
-			if(score>highscore){
-				PlayerPrefs.SetInt ("HighScore", score);
-				HighScore.GetComponent<Text>().text =score.ToString ();
-			}
+			GameObject.FindGameObjectWithTag("GameController").GetComponent<GameController>().Score();
 		}
 	}
 	void OnTriggerEnter2D(Collider2D other) {	
-		//On entering the water disable controls, enable gameover command of game controller and play game over sound.
-		GameOn = false;
-		GameObject.FindGameObjectWithTag("GameController").GetComponent<GameController> ().SendMessage ("GameOver");
+		//GameOn = false;
+		GameObject.FindGameObjectWithTag("GameController").GetComponent<GameController>().GameOver();
+		GameObject.FindGameObjectWithTag("MainCamera").GetComponent<Mover>().speed = 0;
 		sfx.Sinking.Play ();
 		//slowly sink the player and destroy afterwards.
 		transform.DOMoveY (-6f,1.5f);
